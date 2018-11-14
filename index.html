@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Printer</title>
+	<link rel="shortcut icon" href="favicon.ico" sizes="32x32" />
+	<link rel="shortcut icon" href="/images/cropped-IE-Money-Favicon-192x192.png" sizes="192x192" />
+	<link rel="stylesheet" type="text/css" href="lib/amazeui/css/amazeui.min.css">
+	<link rel="stylesheet" type="text/css" href="lib/amazeui/css/amazeui.flat.min.css">
+</head>
+<body>
+	<div style="width: 640px;margin-left: auto;margin-right: auto;margin-top: 100px;">
+		<button type="button" id="generate_nz" style="margin-top: 20px;" class="am-btn am-btn-primary">一键生成</button><br/><hr>
+		<select id="target-option" data-am-selected="{btnWidth: '%', btnSize: 'sm', btnStyle: 'secondary'}">
+		  <option value="NZD/CNY">NZD/CNY</option>
+		  <option value="NZD/USD">NZD/USD</option>
+		  <option value="NZD/AUD">NZD/AUD</option>
+		  <option value="AUD/CNY">AUD/CNY</option>
+		</select>
+		<div style="height: 22px;"></div>
+		<div class="am-input-group">
+		  <span class="am-input-group-label">$</span>
+		  <input type="text" id="rate" class="am-form-field" placeholder="输入汇率，例如：“4.7344/4.8374”">
+		</div>
+		<button type="button" id="add" style="margin-top: 20px;" class="am-btn am-btn-secondary">添加行</button>
+		<button type="button" id="background" style="margin-top: 20px;margin-left: 44px;" class="am-btn am-btn-secondary">切换背景</button>
+	</div>
+
+	<div id="canvas" style="width: 640px;margin-left: auto;margin-right: auto;margin-top: 64px;position: relative;background:url(images/background.jpg);background-size:100% 100%;">
+		<h1 style="text-align: center; color: white;font-weight: bold;padding-top: 32px;">时实汇率</h1>
+		<ul class="am-avg-sm-2 boxes" id="board" style="text-align: center;margin-top: 44px;color: white;position: relative;height: 220px;">
+		  <li class="box" style="font-weight:bold;color: gold;height: 36px;font-size: 22px;">货币对</li>
+		  <li class="box" style="font-weight:bold;color: gold;height: 36px;font-size: 22px;">买卖价</li>
+		</ul>
+		<p style="position: absolute;font-style:italic;bottom: 20px;color: white;text-align: center;width: 100%;"><span id="date-element"></span> 实时汇率<br/>添加IE MONEY客服为好友 咨询更多</p>
+	</div>
+<br />
+<br />
+<br />
+	<!-- <button type="button" id="output" class="am-btn am-btn-secondary" style="margin-left: 35%;width: 30%;margin-bottom: 64px;margin-top: 44px;">生成图片</button> -->
+
+
+	<script type="text/javascript" src="lib/jquery/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="lib/amazeui/js/amazeui.min.js"></script>
+	<script type="text/javascript" src="lib/html2canvas.js"></script>
+
+	<script type="text/javascript">
+		$("#add").on("click", function(e) {
+			var target = $("#target").val() ? $("#target").val() : $("#target-option").val();
+			var rate = $("#rate").val();
+			if (!target) return;
+			if (!rate) return;
+			var appendHtml = "<li class=\"box\" style=\"height:32px;font-size: 28px;\">"+target+"</li>"+
+		  "<li class=\"box\" style=\"height:32px;font-size: 28px;\">"+rate+"</li>";
+			$("#board").append(appendHtml);
+
+			$("ul").height($("li").length/2*32+4+72);
+		});
+		function CurentTime() { 
+	        var now = new Date();
+	        var year = now.getFullYear();       //年
+	        var month = now.getMonth() + 1;     //月
+	        var day = now.getDate();            //日
+	        var hh = now.getHours();            //时
+	        var mm = now.getMinutes();          //分
+	        var clock = year + "/";
+	        if(month < 10) clock += "0";
+	        clock += month + "/";
+	        if(day < 10) clock += "0";
+	        clock += day + " ";
+	        if(hh < 10) clock += "0";
+	        clock += hh + ":";
+	        if (mm < 10) clock += '0'; 
+	        clock += mm; 
+	        return(clock); 
+	    }
+	    $('#date-element').append(CurentTime());
+
+	    $("#background").on('click', function(){
+	    	var rand = Math.floor(Math.random() * 9) + 1;
+
+	    	$('#canvas').css('background', 'url(images/pic0'+rand+'.jpg)');
+	    	$('#canvas').css('background-size', '100% 100%');
+	    });
+
+	    $("#output").on('click', function(e){
+	    	html2canvas($('#canvas'), {
+			  onrendered: function(canvas) {
+			    document.body.appendChild(canvas);
+			        var a = document.createElement('a');
+			        // toDataURL defaults to png, so we need to request a jpeg, then convert for file download.
+			        a.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+			        a.download = 'xiaoshanhaopiaoliang.png';
+			        a.click();
+			    }
+			});
+	    });
+
+	    $("#add-time").on('click', function(e){
+			var time = $("#time").val();
+			$('#date-element').html(time);
+	    });
+
+	    $('#generate_nz').on('click', function(e){
+			$.get('https://myaccount.iemoney.co.nz/remittance/realtime_rate_web', function(re){
+	    		var result = JSON.parse(re);
+	    		var item = {};
+	    		for (var i = result.length - 1; i >= 0; i--) {
+	    			if (result[i]['symbol'] == "NZDCNY") {
+	    				item[0] = result[i];
+	    			} else if (result[i]['symbol'] == "NZDAUD") {
+	    				item[1] = result[i];
+	    			} else if (result[i]['symbol'] == "NZDUSD") {
+	    				item[2] = result[i];
+	    			} else if (result[i]['symbol'] == "AUDCNY") {
+	    				item[3] = result[i];
+	    			}
+	    		}
+
+	    		for (var i = 0; i < 4; i++) {
+    				var target = item[i]['symbol'].substring(0, 3)+"/"+item[i]['symbol'].substring(3, 6);
+					var rate = item[i]['bid'] + '/' + item[i]['ask'];
+					if (!target) return;
+					if (!rate) return;
+					var appendHtml = "<li class=\"box\" style=\"height:32px;font-size: 28px;\">"+target+"</li>"+
+				  		"<li class=\"box\" style=\"height:32px;font-size: 28px;\">"+rate+"</li>";
+					$("#board").append(appendHtml);
+
+					$("ul").height($("li").length/2*32+4+72);
+	    		}
+
+	    	});
+	    });
+
+	    $('#generate').on('click', function(e){
+	    	$.get('https://myaccount.iemoney.co.nz/api/realtime_rate_web', function(re){
+	    		var result = JSON.parse(re);
+	    		var item = {};
+	    		for (var i = result.length - 1; i >= 0; i--) {
+	    			if (result[i]['symbol'] == "AUDCNY") {
+	    				item[0] = result[i];
+	    			} else if (result[i]['symbol'] == "AUDUSD") {
+	    				item[1] = result[i];
+	    			} else if (result[i]['symbol'] == "NZDAUD") {
+	    				item[2] = result[i];
+	    			} else if (result[i]['symbol'] == "NZDCNY") {
+	    				item[3] = result[i];
+	    			}
+	    		}
+
+	    		for (var i = 0; i < 4; i++) {
+    				var target = item[i]['symbol'].substring(0, 3)+"/"+item[i]['symbol'].substring(3, 6);
+					var rate = item[i]['bid'] + '/' + item[i]['ask'];
+					if (!target) return;
+					if (!rate) return;
+					var appendHtml = "<li class=\"box\" style=\"height:32px;font-size: 28px;\">"+target+"</li>"+
+				  		"<li class=\"box\" style=\"height:32px;font-size: 28px;\">"+rate+"</li>";
+					$("#board").append(appendHtml);
+
+					$("ul").height($("li").length/2*32+4+72);
+	    		}
+
+	    	});
+	    });
+
+
+	</script>
+</body>
+</html>
