@@ -117,7 +117,7 @@
 	    		}
 
 	    		for (var i = 0; i < 4; i++) {
-					if (i == 0)item[i]['bid'] = item[0]['bid']*0.995;
+					if (i == 0)item[i]['bid'] = (item[0]['bid']*0.995).substring(0, 3);
     				var target = item[i]['symbol'].substring(0, 3)+"/"+item[i]['symbol'].substring(3, 6);
 					var rate = item[i]['bid'] + '/' + item[i]['ask'];
 					if (!target) return;
